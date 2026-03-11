@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I'm Sorry &#129402;</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;700;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+
+        :root {
+            --text-light: #f2f4f8;
+            --card-blue: #a3c4f3;
+            --card-yellow: #fdfd96;
+            --card-green: #b9f2a1;
+            --card-pink: #ffb7b2;
+            --panel-bg: rgba(255, 255, 255, 0.88);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Nunito', sans-serif;
+            overflow-x: hidden;
+            color: #1e1e1e;
+            background: #111;
+        }
+
+        #bg-video-wrap {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #bg-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scale(1.08);
+            filter: blur(10px) brightness(0.55);
+        }
+
+        #bg-video-wrap::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(10, 12, 18, 0.25), rgba(10, 12, 18, 0.65));
+        }
+
+        #btn-play-video {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 30;
+            border: 0;
+            border-radius: 999px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            background: rgba(17, 24, 39, 0.9);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        #btn-play-video.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        #btn-play-video:hover {
+            background: rgba(31, 41, 55, 0.95);
+        }
+
+        .content-layer {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* Screen 1 */
+        .card {
+            background: var(--panel-bg);
+            padding: 50px 40px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            z-index: 10;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            backdrop-filter: blur(6px);
+        }
+
+        .card.hidden {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .card h1 {
+            color: #1e1e1e;
+            font-size: 1.9rem;
+            font-weight: 800;
+            margin-bottom: 35px;
+            line-height: 1.4;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            height: 50px;
+        }
+
+        button {
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.5s ease;
+        }
+
+        #btn-yes {
+            background-color: #4caf50;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.35);
+        }
+
+        #btn-yes:hover {
+            background-color: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.45);
+        }
+
+        #btn-yes:active {
+            transform: scale(0.95);
+        }
+
+        #btn-no {
+            background-color: #ff4757;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.3);
+            z-index: 100;
+            position: relative;
+        }
+
+        /* Screen 2 */
+        #thoughts-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1000px;
+            padding: 40px 20px;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.8s ease 0.3s, transform 0.8s ease 0.3s;
+        }
+
+        #thoughts-container.visible {
+            display: flex;
+        }
+
+        #thoughts-container.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #thoughts-container.fade-out {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        #thoughts-container h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-style: italic;
+            color: #ffffff;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+            margin-bottom: 50px;
+            font-size: 2.8rem;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 30px;
+            width: 100%;
+            justify-items: center;
+        }
+
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            max-width: 260px;
+            aspect-ratio: 3 / 4;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .flip-card:hover .flip-card-inner {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .flip-card-front {
+            font-size: 4.5rem;
+            color: rgba(0, 0, 0, 0.45);
+            box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.4);
+            border: 12px solid rgba(255, 255, 255, 0.9);
+            border-bottom-width: 40px;
+        }
+
+        .flip-card:nth-child(1) {
+            transform: rotate(-2deg);
+        }
+
+        .flip-card:nth-child(2) {
+            transform: rotate(3deg);
+        }
+
+        .flip-card:nth-child(3) {
+            transform: rotate(-1deg);
+        }
+
+        .flip-card:nth-child(4) {
+            transform: rotate(2deg);
+        }
+
+        .flip-card-front.card-blue {
+            background-color: var(--card-blue);
+        }
+
+        .flip-card-front.card-yellow {
+            background-color: var(--card-yellow);
+        }
+
+        .flip-card-front.card-green {
+            background-color: var(--card-green);
+        }
+
+        .flip-card-front.card-pink {
+            background-color: var(--card-pink);
+        }
+
+        .flip-card-back {
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #333;
+            transform: rotateY(180deg);
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            line-height: 1.6;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+            border: 1px solid #f0f0f0;
+        }
+
+        .flip-card-back p {
+            margin: 0;
+            padding: 10px;
+        }
+
+        .flip-card-back ul {
+            text-align: left;
+            padding-left: 20px;
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .flip-card-back li {
+            margin-bottom: 12px;
+        }
+
+        .flip-card-back img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        #btn-next {
+            margin-top: 50px;
+            background-color: #1f2937;
+            color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: opacity 0.8s ease, transform 0.8s ease, background-color 0.2s;
+        }
+
+        #btn-next:hover {
+            background-color: #374151;
+            transform: translateY(-2px);
+        }
+
+        #btn-next.visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* Screen 3 */
+        #letter-container {
+            display: none;
+            width: 100%;
+            max-width: 860px;
+            padding: 30px;
+            opacity: 0;
+        }
+
+        #letter-container.visible {
+            display: block;
+            animation: slowFadeIn 3.5s ease-in-out forwards;
+        }
+
+        @keyframes slowFadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(15px);
+                filter: blur(2px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        .letter-content {
+            color: var(--text-light);
+            font-family: 'Nunito', sans-serif;
+            font-weight: 300;
+            font-size: 1.35rem;
+            line-height: 2;
+            text-align: left;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.45);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 18px;
+            padding: 34px;
+            backdrop-filter: blur(3px);
+        }
+
+        .letter-content p {
+            margin-bottom: 30px;
+            letter-spacing: 0.3px;
+        }
+
+        .letter-signature {
+            margin-top: 40px;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            #thoughts-container h1 {
+                font-size: 2.2rem;
+                margin-bottom: 30px;
+            }
+
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .flip-card-front {
+                font-size: 3.5rem;
+                border-bottom-width: 30px;
+            }
+
+            .flip-card-back {
+                font-size: 1rem;
+                padding: 15px;
+            }
+
+            .letter-content {
+                font-size: 1.1rem;
+                line-height: 1.8;
+                padding: 26px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            #thoughts-container h1 {
+                font-size: 1.8rem;
+            }
+
+            .flip-card {
+                max-width: 280px;
+            }
+
+            #letter-container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="bg-video-wrap" aria-hidden="true">
+        <video id="bg-video" autoplay loop playsinline>
+            <source src="/Qayde_Se_240.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <button id="btn-play-video" type="button">Play background video</button>
+
+    <div class="content-layer">
+        <!-- Screen 1: The Apology -->
+        <div class="card" id="main-card">
+            <h1>I am so sorry I messed up. Will you let me make it up to you? &#129402;</h1>
+            <div class="buttons">
+                <button id="btn-yes">Yes</button>
+                <button id="btn-no">No</button>
+            </div>
+        </div>
+
+        <!-- Screen 2: Thoughts Grid -->
+        <div id="thoughts-container">
+            <h1>A few thoughts for you.</h1>
+            <div class="grid">
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front card-blue"><span class="icon">&#128140;</span></div>
+                        <div class="flip-card-back">
+                            <p>I am truly sorry. I let you down, and I promise to be more mindful and considerate moving forward.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front card-yellow"><span class="icon">&#128173;</span></div>
+                        <div class="flip-card-back">
+                            <p>Even with all these miles between us, making you smile has always been my priority. I promise to bring that closeness back and be the reason you feel loved, no matter how far apart we are.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front card-yellow"><span class="icon">&#128173;</span></div>
+                        <div class="flip-card-back">
+                            <p>I regret not giving you those small moments to remember instead of my sorry and mistakes. I promise to start filling your screen with the little things that remind you exactly how important you are to me.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front card-yellow"><span class="icon">&#128173;</span></div>
+                        <div class="flip-card-back">
+                            <p>i very much apprecite that you put so much beautiful energy into making us work every single day . My only goal now is to match that effort, make your days lighter, and bring you the peace you deserve..</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front card-green"><span class="icon">&#10024;</span></div>
+                        <div class="flip-card-back">
+                            <ul>
+                                <li>I promise to communicate openly.</li>
+                                <li>I promise to think before I act.</li>
+                                <li>I promise to always prioritize us.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flip-card">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front card-pink"><span class="icon">&#128248;</span></div>
+                        <div class="flip-card-back" style="padding: 10px;">
+                            <img src="/IMG3.jpeg" alt="Our hugging pic">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button id="btn-next">Next &rarr;</button>
+        </div>
+
+        <!-- Screen 3: The Formal Letter -->
+        <div id="letter-container">
+            <div class="letter-content">
+                <p>Dear Tanya,</p>
+
+                <p>
+                    I am writing this to you because mere words spoken in haste are not enough to convey the depth of my regret.
+                    I know that I messed up, and I know that my actions caused you pain. That is the absolute last thing in the
+                    world I ever wanted to do. You are the most important person in my life, and seeing you upset because of me
+                    truly breaks my heart and i always wanted to make it right but didn't know how . . . ? .
+                </p>
+
+                <p>
+                    I take full responsibility for my mistakes. I am committed to learning from this, to being more thoughtful,
+                    and to becoming the partner you truly deserve. The joy we share, your patience, your kindness, and your love
+                    mean absolutely everything to me, and I promise to never take them for granted again.
+                </p>
+
+                <p>
+                    Please give me the chance to make it right, to earn back your trust, and to continue building our beautiful
+                    life together.
+                </p>
+
+                <p class="letter-signature">Love always,<br><br>Suman</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        const btnNo = document.getElementById('btn-no');
+        const btnYes = document.getElementById('btn-yes');
+        const mainCard = document.getElementById('main-card');
+        const thoughtsContainer = document.getElementById('thoughts-container');
+        const btnNext = document.getElementById('btn-next');
+        const letterContainer = document.getElementById('letter-container');
+        const flipCards = Array.from(document.querySelectorAll('.flip-card'));
+        const bgVideo = document.getElementById('bg-video');
+        const btnPlayVideo = document.getElementById('btn-play-video');
+
+        const updateVideoPlayButton = () => {
+            btnPlayVideo.classList.toggle('show', bgVideo.paused);
+        };
+
+        const tryPlayBackgroundVideo = () => {
+            const playPromise = bgVideo.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(updateVideoPlayButton)
+                    .catch(() => {
+                        // Autoplay can still fail in some browser/device combinations.
+                        updateVideoPlayButton();
+                    });
+            } else {
+                updateVideoPlayButton();
+            }
+        };
+
+        btnPlayVideo.addEventListener('click', tryPlayBackgroundVideo);
+        bgVideo.addEventListener('play', updateVideoPlayButton);
+        bgVideo.addEventListener('pause', updateVideoPlayButton);
+        bgVideo.addEventListener('loadeddata', updateVideoPlayButton);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && bgVideo.paused) {
+                tryPlayBackgroundVideo();
+            }
+        });
+        tryPlayBackgroundVideo();
+
+        const moveNoButton = () => {
+            if (btnNo.style.position !== 'fixed') {
+                const rect = btnNo.getBoundingClientRect();
+                btnNo.style.left = rect.left + 'px';
+                btnNo.style.top = rect.top + 'px';
+                btnNo.style.position = 'fixed';
+                document.body.appendChild(btnNo);
+            }
+
+            const padding = 20;
+            const maxX = Math.max(padding, window.innerWidth - btnNo.offsetWidth - padding);
+            const maxY = Math.max(padding, window.innerHeight - btnNo.offsetHeight - padding);
+            const randomX = Math.floor(Math.random() * (maxX - padding + 1)) + padding;
+            const randomY = Math.floor(Math.random() * (maxY - padding + 1)) + padding;
+
+            btnNo.style.left = randomX + 'px';
+            btnNo.style.top = randomY + 'px';
+        };
+
+        btnNo.addEventListener('mouseover', moveNoButton);
+        btnNo.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            moveNoButton();
+        }, { passive: false });
+
+        btnYes.addEventListener('click', () => {
+            btnNo.style.display = 'none';
+            mainCard.classList.add('hidden');
+
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                zIndex: 1000
+            });
+
+            setTimeout(() => {
+                mainCard.style.display = 'none';
+                thoughtsContainer.classList.add('visible');
+                requestAnimationFrame(() => {
+                    thoughtsContainer.classList.add('animate-in');
+                });
+            }, 550);
+        });
+
+        const flippedCards = new Set();
+        flipCards.forEach((card, index) => {
+            card.addEventListener('click', () => {
+                card.classList.toggle('flipped');
+                if (card.classList.contains('flipped')) {
+                    flippedCards.add(index);
+                } else {
+                    flippedCards.delete(index);
+                }
+                btnNext.classList.toggle('visible', flippedCards.size === flipCards.length);
+            });
+        });
+
+        btnNext.addEventListener('click', () => {
+            thoughtsContainer.classList.add('fade-out');
+
+            setTimeout(() => {
+                thoughtsContainer.style.display = 'none';
+                letterContainer.classList.add('visible');
+                confetti({
+                    particleCount: 120,
+                    spread: 90,
+                    origin: { y: 0.7 },
+                    zIndex: 1000
+                });
+            }, 600);
+        });
+    </script>
+</body>
+</html>
